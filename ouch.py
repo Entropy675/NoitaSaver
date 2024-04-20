@@ -57,9 +57,12 @@ def load(args):
     
     loadSave = os.path.join(savesPath, args.name)
     if not os.path.exists(loadSave):
-        print("The name you chose was not found.")
-        list();
-        return;
+        if os.path.exists(os.path.join(backupPath, args.name)):
+            loadSave = os.path.join(backupPath, args.name)
+        else:
+            print("The name you chose was not found.")
+            list();
+            return;
     
     if args.name != "BACK":
         backupSave = os.path.join(savesPath, "BACK")
@@ -194,7 +197,8 @@ def help(args):
     return 0;
 
 def run(args):
-    subprocess.run(["start", "cmd", "/c", f"start steam://run/881100"], shell=False)
+    #subprocess.run(["start", "cmd", "/c", f"start steam://rungameid/881100"], shell=False)
+    subprocess.Popen(["start", "steam://rungameid/881100"], shell=True)
 
 def main():
     parser = argparse.ArgumentParser(description='Profile saver for Faster Than Light')
