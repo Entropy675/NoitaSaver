@@ -1,2 +1,2 @@
 # NoitaSaver
-Lightweight noita profile saver (might try to support autosaving)
+Lightweight noita profile saver (roughly supports autosaving)
