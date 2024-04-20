@@ -13,6 +13,7 @@ backupPathName = 'autosave'
 backupPath = os.path.join(savesPath, backupPathName)
 saveFolder = os.path.join(os.getcwd(), 'save00')
 autosavePollingRate = 5 # mins
+maxBackupFiles = 300
 
 def drawGreeting():
     print("A lightweight Noita saver. Takes away all surprises.")
@@ -88,14 +89,16 @@ def list(args=None):
         saveLists -= 1
     
     try:
-        files = os.listdir(backupPath)
+        folders = [folder for folder in os.listdir(backupPath) if os.path.isdir(os.path.join(backupPath, folder))]
     except FileNotFoundError:
         if not ensureSavesFolderExists():
             print("Could not list directory: Directory does not exist and could not be created.")
-    if files:
+    if folders:
         print("List of backup saves:")
-        for save in files:
-            print(f"  {save.ljust(25)} |\t (Last Modified: {datetime.fromtimestamp(os.path.getmtime(savesPath + save))})");
+        for save in folders:
+            folderPath = os.path.join(backupPath, save)
+            lastModified = datetime.fromtimestamp(os.path.getmtime(folderPath))
+            print(f"  {save.ljust(25)} |\t (Last Modified: {lastModified})")
     else:
         saveLists -= 1
     
@@ -118,8 +121,21 @@ def ensureSavesFolderExists():
 def autosave(args):
     print(f"Entering autosave mode with {args.name} file.")
     while True:
+        cleanup_backup_path()
         save(args)
         time.sleep(args.interval * 60)  # Convert minutes to seconds
+
+def cleanup_backup_path():
+    files = os.listdir(backupPath)
+    if len(files) > maxBackupFiles:
+        files.sort(key=lambda x: os.path.getmtime(os.path.join(backupPath, x)))
+        
+        num_files_to_delete = len(files) - maxBackupFiles
+        
+        for i in range(num_files_to_delete):
+            file_to_delete = os.path.join(backupPath, files[i])
+            print(f"Deleting old backup file: {file_to_delete}")
+            os.remove(file_to_delete)
 
 def delete(args):
     normalSave = os.path.join(savesPath, args.name)
