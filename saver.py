@@ -4,6 +4,7 @@ import os
 import subprocess
 import argparse
 import shutil
+import time
 from datetime import datetime
 
 # Config:
@@ -29,7 +30,7 @@ def moveData(saveFrom, saveTo):
                 pass
             if saveName != "BACK" and saveTo != saveFolder:
                 print(f"Saving old file to backup path: {backupPath}")
-                moveData(saveTo, os.path.join(backupPath, f"BACK.{os.path.basename(saveTo)}.{datetime.now().strftime('%H:%M:%S')}"))
+                moveData(saveTo, os.path.join(backupPath, f"BACK.{os.path.basename(saveTo)}.{datetime.now().strftime('%H_%M_%S')}"))
 
             shutil.rmtree(saveTo)
         print(f"Moving {saveFrom} to {saveTo}")
@@ -114,6 +115,12 @@ def ensureSavesFolderExists():
         print(f"Error creating folder '{savesPath}': {e}")
         return False
 
+def autosave(args):
+    print(f"Entering autosave mode with {args.name} file.")
+    while True:
+        save(args)
+        time.sleep(args.interval * 60)  # Convert minutes to seconds
+
 def delete(args):
     normalSave = os.path.join(savesPath, args.name)
     if os.path.exists(normalSave):
@@ -140,7 +147,11 @@ def help(args):
     """,
     f"""
 {runname} save [name]:
-    Saves the current progress to the name specified. 
+    Saves current progress to the name specified. 
+    """,
+    f"""
+{runname} autosave [name] [interval]:
+    Saves current progress to the name specified, repeating on a specified number of minutes, default {autosavePollingRate}. 
     """,
     f"""
 {runname} load [name]:
@@ -181,6 +192,11 @@ def main():
     parserSave.add_argument('name', type=str, default="NEW", help='Name of save file (default is [NEW])')
     parserSave.set_defaults(func=save)
     
+    parserAutosave = subparsers.add_parser('autosave', help=f'Saves current progress to the name specified, repeating on a specified number of minutes, default {autosavePollingRate}.')
+    parserAutosave.add_argument('name', type=str, default="NEW", help='Name of save file (default is [NEW])')
+    parserAutosave.add_argument('interval', type=int, default=autosavePollingRate, help='Interval in minutes before saving again.')
+    parserAutosave.set_defaults(func=autosave)
+    
     parserLoad = subparsers.add_parser('load', help='Loads the given name if such file exists, otherwise does list.')
     parserLoad.add_argument('name', type=str, default="NEW", help='''
 Loads the save with given name, if it doesn't exist
@@ -189,9 +205,9 @@ nothing else.'''
     )
     parserLoad.set_defaults(func=load)
     
-    parserSave = subparsers.add_parser('delete', help='Deletes a save with a name, like: \'delete game1\' or \'delete superbadrun\'.')
-    parserSave.add_argument('name', type=str, default="NEW", help='Name of save file (default is [NEW])')
-    parserSave.set_defaults(func=delete)
+    parserDelete = subparsers.add_parser('delete', help='Deletes a save with a name, like: \'delete game1\' or \'delete superbadrun\'.')
+    parserDelete.add_argument('name', type=str, default="NEW", help='Name of save file (default is [NEW])')
+    parserDelete.set_defaults(func=delete)
     
     parserList = subparsers.add_parser('list', help='Lists the saves locally stored in specified folder. ')
     parserList.set_defaults(func=list)
