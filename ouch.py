@@ -23,6 +23,8 @@ def drawGreeting():
 
 def moveData(saveFrom, saveTo):
     try:
+        if os.path.exists(os.path.join(os.getcwd(), "TEMP")):
+            shutil.rmtree(os.path.join(os.getcwd(), "TEMP"))
         if os.path.exists(saveTo):
             saveName = os.path.basename(saveTo)
             try:
